@@ -166,9 +166,13 @@ impl Scheduler {
             if result.success {
                 self.update_next_time(user_id, mode, result.activity).await;
             } else {
+                // On failure (rate limit, API error), back off instead of
+                // immediately re-queuing, to avoid feedback loops when the
+                // rate limiter is saturated by concurrent user queries.
+                let backoff = Utc::now() + chrono::TimeDelta::minutes(5);
                 if let Err(e) = self
                     .storage
-                    .set_next_update(user_id, mode, Utc::now())
+                    .set_next_update(user_id, mode, backoff)
                     .await
                 {
                     warn!(

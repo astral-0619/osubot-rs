@@ -1057,17 +1057,11 @@ impl Storage {
             .query(
                 "SELECT user_id, mode FROM user_next_update WHERE next_update <= ?1
                 UNION ALL
-                SELECT b.user_id AS user_id, m.mode
+                SELECT b.user_id AS user_id, 0 AS mode
                 FROM user_bindings b
-                CROSS JOIN (
-                SELECT 0 AS mode
-                UNION ALL SELECT 1
-                UNION ALL SELECT 2
-                UNION ALL SELECT 3
-                ) AS m
                 WHERE NOT EXISTS (
                     SELECT 1 FROM user_next_update n
-                    WHERE n.user_id = b.user_id AND n.mode = m.mode
+                    WHERE n.user_id = b.user_id
                 )",
                 params![now_ts],
             )
